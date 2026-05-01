@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulk Upload - INEC Admin{% endblock %}
+
+{% block content %}
+<div class="glass-card animate-fade-in" style="max-width: 600px; margin: 2rem auto;">
+    <h1 style="color: var(--primary); margin-bottom: 0.5rem; text-align: center;">Bulk Registration Upload</h1>
+    <p class="text-muted" style="text-align: center; margin-bottom: 2rem;">Upload a CSV file containing multiple voter registrations.</p>
+
+    <div style="background: rgba(0, 135, 81, 0.05); border: 1px solid rgba(0, 135, 81, 0.2); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+        <h4 style="margin-top: 0; color: var(--primary);">CSV Format Requirements:</h4>
+        <ul style="color: var(--text-muted); font-size: 0.875rem; margin-left: 1rem; margin-bottom: 0;">
+            <li>First row must be headers: <code>first_name, surname, date_of_birth, state, lga...</code></li>
+            <li>Date format should be YYYY-MM-DD</li>
+            <li>Maximum file size: 10MB</li>
+            <li>No biometric images allowed directly in bulk upload (must be done individually)</li>
+        </ul>
+    </div>
+
+    <form method="post" action="{% url 'registration:bulk_upload' %}" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {% for error in form.non_field_errors %}
+                    <p style="margin:0;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="form-group text-center" style="border: 2px dashed var(--border-color); border-radius: var(--radius-md); padding: 2rem; background: rgba(255,255,255,0.5);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <label class="form-label mb-2" for="{{ form.csv_file.id_for_label }}">Select CSV File</label>
+            <div style="max-width: 300px; margin: 0 auto;">
+                {{ form.csv_file }}
+                {% if form.csv_file.errors %}<span style="color:var(--danger); font-size:0.875rem; display:block; margin-top:0.5rem;">{{ form.csv_file.errors.0 }}</span>{% endif %}
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem;">
+            <a href="{% url 'registration_list' %}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary" style="padding-left: 2rem; padding-right: 2rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Upload & Process
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

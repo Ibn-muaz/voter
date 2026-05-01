@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Logged Out - INEC Underage Eradicator{% endblock %}
+
+{% block content %}
+<div class="flex justify-center" style="min-height: calc(100vh - 200px); align-items: center;">
+    <div class="glass-card animate-fade-in" style="max-width: 450px; width: 100%; text-align: center;">
+        <div class="status-icon success">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+        </div>
+        <h2 style="margin-bottom: 1rem;">Logged Out</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">You have been successfully logged out of the system. Thank you for your service.</p>
+        
+        <div class="flex flex-col gap-3">
+            <a href="{% url 'login' %}" class="btn btn-primary">
+                Log Back In
+            </a>
+            <a href="{% url 'registration:wizard' %}" class="btn btn-outline">
+                Return to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

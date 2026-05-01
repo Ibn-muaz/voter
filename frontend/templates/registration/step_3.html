@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Step 3: Biometric Capture - INEC Registration{% endblock %}
+
+{% block content %}
+<div class="glass-card animate-fade-in delay-200">
+    <div class="text-center" style="margin-bottom: 2rem;">
+        <h1 style="color: var(--primary);">Biometric Capture</h1>
+        <p class="text-muted">Take a clear picture of your face and fingerprint for secure identification.</p>
+    </div>
+
+    <!-- Wizard Progress -->
+    <div class="wizard-progress">
+        <div class="wizard-step completed">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span class="wizard-label">Personal Info</span>
+        </div>
+        <div class="wizard-step completed">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span class="wizard-label">Documents</span>
+        </div>
+        <div class="wizard-step active">
+            3
+            <span class="wizard-label">Biometrics</span>
+        </div>
+        <div class="wizard-step">
+            4
+            <span class="wizard-label">Review</span>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'registration:wizard' step=3 %}" enctype="multipart/form-data" novalidate class="mt-4">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {% for error in form.non_field_errors %}
+                    <p style="margin:0;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            
+            <!-- Facial Image Capture -->
+            <div class="text-center p-4 bg-white" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+                <div style="margin: 0 auto 1.5rem; width: 150px; height: 150px; border-radius: 50%; border: 4px dashed var(--primary); display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative;">
+                    <svg style="color: var(--primary-light); opacity: 0.5;" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <!-- In a real PWA this would show the <video> stream from webcam -->
+                </div>
+                <h3 style="color: var(--primary);">Facial Capture</h3>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">Take a straight-facing, clear photo without glasses or caps.</p>
+                
+                <div class="form-group text-left">
+                    {{ form.facial_image }}
+                    {% if form.facial_image.errors %}<span style="color:var(--danger); font-size:0.875rem; display:block; margin-top:0.5rem;">{{ form.facial_image.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+
+            <!-- Fingerprint Capture -->
+            <div class="text-center p-4 bg-white" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+                <div style="margin: 0 auto 1.5rem; width: 150px; height: 150px; border-radius: var(--radius-md); border: 4px dashed var(--primary); display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative;">
+                    <svg style="color: var(--primary-light); opacity: 0.5;" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12A10 10 0 1 0 12 22"></path>
+                        <path d="M12 22A10 10 0 1 0 2 12"></path>
+                    </svg>
+                </div>
+                <h3 style="color: var(--primary);">Fingerprint Data</h3>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">Upload clear fingerprint scan image.</p>
+                
+                <div class="form-group text-left">
+                    {{ form.fingerprint_image }}
+                    {% if form.fingerprint_image.errors %}<span style="color:var(--danger); font-size:0.875rem; display:block; margin-top:0.5rem;">{{ form.fingerprint_image.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="form-group" style="margin-top: 2rem; background: rgba(0,135,81,0.05); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid rgba(0,135,81,0.2);">
+            <label style="display: flex; align-items: flex-start; gap: 1rem; cursor: pointer;">
+                {{ form.consent_given }}
+                <div>
+                    <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Biometric Processing Consent</strong>
+                    <span style="font-size: 0.875rem; color: var(--text-muted);">{{ form.consent_given.help_text }}</span>
+                    {% if form.consent_given.errors %}
+                        <span style="color:var(--danger); font-size:0.875rem; display:block; margin-top:0.5rem;">{{ form.consent_given.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </label>
+        </div>
+
+        <div style="margin-top: 2.5rem; display: flex; justify-content: space-between;">
+            <a href="{% url 'registration:wizard' step=2 %}" class="btn btn-outline">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back
+            </a>
+            <button type="submit" class="btn btn-primary">
+                Next Step
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

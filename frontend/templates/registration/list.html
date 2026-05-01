@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Registration List{% endblock %}
+
+{% block content %}
+<div class="glass-card animate-fade-in" style="max-width: 1000px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 style="color: var(--primary); margin: 0;">Registration Dashboard</h1>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'registration:search' %}" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:0.5rem; vertical-align:middle;">
+                    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>Search
+            </a>
+            <a href="{% url 'registration:bulk_upload' %}" class="btn btn-primary" style="padding: 0.5rem 1rem;">Bulk Upload</a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="background: rgba(255,255,255,0.7); p-2; mb-4; border-radius: var(--radius-md); border: 1px solid var(--border-color); padding: 1rem; margin-bottom: 1.5rem;">
+        <form method="get" class="flex gap-4 items-center">
+            <div style="flex: 1;">
+                <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Search by VIN, Name, Phone..." style="padding: 0.5rem 1rem; border-radius: var(--radius-sm);">
+            </div>
+            <div>
+                <select name="status" class="form-control" style="padding: 0.5rem 1rem; border-radius: var(--radius-sm);">
+                    <option value="">All Statuses</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                    <option value="flagged" {% if status_filter == 'flagged' %}selected{% endif %}>Flagged for Review</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Filter</button>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>VIN / Ref</th>
+                    <th>State</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reg in page_obj %}
+                <tr>
+                    <td style="color: var(--text-muted); font-size: 0.875rem;">{{ reg.created_at|date:"M d, Y" }}</td>
+                    <td style="font-weight: 500;">{{ reg.first_name }} {{ reg.surname }}</td>
+                    <td><span style="font-family: monospace;">{{ reg.vin|default:reg.id|stringformat:"s"|slice:":8" }}</span></td>
+                    <td>{{ reg.state_of_origin }}</td>
+                    <td>
+                        {% if reg.status == 'approved' %}
+                            <span class="badge badge-success">Approved</span>
+                        {% elif reg.status == 'rejected' %}
+                            <span class="badge badge-danger">Rejected</span>
+                        {% elif reg.status == 'flagged' %}
+                            <span class="badge badge-warning">Review</span>
+                        {% else %}
+                            <span class="badge badge-info">{{ reg.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'registration:detail' reg.id %}" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">View</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                        No registrations found matching your criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
+        <div style="font-size: 0.875rem; color: var(--text-muted);">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&search={{ search_query }}" class="btn btn-outline" style="padding: 0.25rem 0.75rem;">Prev</a>
+            {% endif %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&search={{ search_query }}" class="btn btn-outline" style="padding: 0.25rem 0.75rem;">Next</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

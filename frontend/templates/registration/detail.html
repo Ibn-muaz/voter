@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Registration Details - INEC{% endblock %}
+
+{% block content %}
+<div class="glass-card animate-fade-in" style="max-width: 900px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+        <div>
+            <h1 style="color: var(--primary); margin: 0 0 0.5rem 0;">Registration Details</h1>
+            <p class="text-muted" style="margin: 0;">Ref: {{ registration.id }}</p>
+        </div>
+        <div>
+            {% if registration.status == 'approved' %}
+                <span class="badge badge-success" style="font-size: 1rem; padding: 0.5rem 1rem;">Approved</span>
+            {% elif registration.status == 'rejected' %}
+                <span class="badge badge-danger" style="font-size: 1rem; padding: 0.5rem 1rem;">Rejected</span>
+            {% elif registration.status == 'flagged' %}
+                <span class="badge badge-warning" style="font-size: 1rem; padding: 0.5rem 1rem;">Flagged for Review</span>
+            {% else %}
+                <span class="badge badge-info" style="font-size: 1rem; padding: 0.5rem 1rem;">{{ registration.status|title }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <!-- Personal Info Section -->
+        <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Personal Information</h3>
+            <div style="display: grid; gap: 0.75rem;">
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">Full Name:</span> <br><strong>{{ registration.first_name }} {{ registration.middle_name }} {{ registration.surname }}</strong></div>
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">Gender:</span> <br><strong>{{ registration.get_gender_display|default:registration.gender }}</strong></div>
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">Date of Birth:</span> <br><strong>{{ registration.date_of_birth }} (Age: {{ registration.age }})</strong></div>
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">Occupation:</span> <br><strong>{{ registration.occupation }}</strong></div>
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">Phone:</span> <br><strong>{{ registration.phone_number }}</strong></div>
+            </div>
+        </div>
+
+        <!-- Location Section -->
+        <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Location Details</h3>
+            <div style="display: grid; gap: 0.75rem;">
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">State of Origin:</span> <br><strong>{{ registration.state_of_origin }}</strong></div>
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">LGA:</span> <br><strong>{{ registration.lga_of_origin }}</strong></div>
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">Ward:</span> <br><strong>{{ registration.ward }}</strong></div>
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">Polling Unit:</span> <br><strong>{{ registration.polling_unit }}</strong></div>
+                <div><span style="color: var(--text-muted); font-size: 0.875rem;">Address:</span> <br><strong>{{ registration.residence_address }}</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Verification Stats -->
+    <div style="background: rgba(0, 135, 81, 0.05); border: 1px solid rgba(0, 135, 81, 0.2); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem;">
+        <h3 style="color: var(--primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            AI Verification Results
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; text-align: center;">
+            <div style="background: white; padding: 1rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">Overall Score</p>
+                <p style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">{{ registration.ai_verification_score|floatformat:2|default:"N/A" }}</p>
+            </div>
+            <div style="background: white; padding: 1rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">Age Verified</p>
+                <p style="font-size: 1.25rem; font-weight: 600;">
+                    {% if registration.age_verification_passed %}
+                        <span style="color: var(--success);">Passed</span>
+                    {% else %}
+                        <span style="color: var(--warning);">Pending/Failed</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div style="background: white; padding: 1rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">Biometrics</p>
+                <p style="font-size: 1.25rem; font-weight: 600;">
+                    {% if registration.biometric_verification_passed %}
+                        <span style="color: var(--success);">Passed</span>
+                    {% else %}
+                        <span style="color: var(--warning);">Pending/Failed</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Actions -->
+    <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+        <a href="{% url 'registration_list' %}" class="btn btn-outline">Back to List</a>
+        {% if registration.status == 'flagged' or registration.status == 'pending_verification' %}
+            <button class="btn btn-primary" style="background-color: var(--success);">Approve Manually</button>
+            <button class="btn btn-primary" style="background-color: var(--danger);">Reject Application</button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

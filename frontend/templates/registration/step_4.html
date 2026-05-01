@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Step 4: Review & Submit - INEC Registration{% endblock %}
+
+{% block content %}
+<div class="glass-card animate-fade-in delay-300">
+    <div class="text-center" style="margin-bottom: 2rem;">
+        <h1 style="color: var(--primary);">Final Review</h1>
+        <p class="text-muted">Review your information before final submission. This will be verified by AI.</p>
+    </div>
+
+    <!-- Wizard Progress -->
+    <div class="wizard-progress">
+        <div class="wizard-step completed">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span class="wizard-label">Personal Info</span>
+        </div>
+        <div class="wizard-step completed">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span class="wizard-label">Documents</span>
+        </div>
+        <div class="wizard-step completed">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span class="wizard-label">Biometrics</span>
+        </div>
+        <div class="wizard-step active">
+            4
+            <span class="wizard-label">Review</span>
+        </div>
+    </div>
+
+    <!-- Data Summary -->
+    <div style="background: rgba(255,255,255,0.7); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem;">
+        <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Summary of Details</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Full Name</span>
+                <p style="font-weight: 500;">{{ registration.first_name }} {{ registration.middle_name }} {{ registration.surname }}</p>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Date of Birth</span>
+                <p style="font-weight: 500;">{{ registration.date_of_birth }}</p>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">State of Origin</span>
+                <p style="font-weight: 500;">{{ registration.state_of_origin }}</p>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Phone Number</span>
+                <p style="font-weight: 500;">{{ registration.phone_number }}</p>
+            </div>
+            <div style="grid-column: 1 / -1;">
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Polling Unit</span>
+                <p style="font-weight: 500;">{{ registration.ward }}, {{ registration.polling_unit }}</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem; flex-wrap: wrap;">
+            <span class="badge badge-success"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; vertical-align:middle;"><polyline points="20 6 9 17 4 12"></polyline></svg> Documents Uploaded</span>
+            <span class="badge badge-success"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; vertical-align:middle;"><polyline points="20 6 9 17 4 12"></polyline></svg> Biometrics Captured</span>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'registration:wizard' step=4 %}" novalidate>
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {% for error in form.non_field_errors %}
+                    <p style="margin:0;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Declarations -->
+            <div class="form-group" style="margin: 0;">
+                <label style="display: flex; align-items: flex-start; gap: 1rem; cursor: pointer;">
+                    {{ form.declaration }}
+                    <div>
+                        <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Declaration of Truth</strong>
+                        <span style="font-size: 0.875rem; color: var(--text-muted);">{{ form.declaration.help_text }}</span>
+                        {% if form.declaration.errors %}<span style="color:var(--danger); font-size:0.875rem; display:block; margin-top:0.5rem;">{{ form.declaration.errors.0 }}</span>{% endif %}
+                    </div>
+                </label>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label style="display: flex; align-items: flex-start; gap: 1rem; cursor: pointer;">
+                    {{ form.data_processing_consent }}
+                    <div>
+                        <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Data Processing Consent</strong>
+                        <span style="font-size: 0.875rem; color: var(--text-muted);">{{ form.data_processing_consent.help_text }}</span>
+                        {% if form.data_processing_consent.errors %}<span style="color:var(--danger); font-size:0.875rem; display:block; margin-top:0.5rem;">{{ form.data_processing_consent.errors.0 }}</span>{% endif %}
+                    </div>
+                </label>
+            </div>
+
+            <!-- Captcha -->
+            <div class="form-group p-4" style="background: rgba(0,0,0,0.03); border-radius: var(--radius-md); text-align: center;">
+                <label class="form-label">Security Check</label>
+                <div style="margin: 1rem auto; display: inline-block; padding: 0.5rem; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                    <img src="data:image/png;base64,{{ captcha_image }}" alt="CAPTCHA" style="display: block;">
+                </div>
+                <div style="max-width: 300px; margin: 0 auto;">
+                    {{ form.captcha_input }}
+                    <span class="form-text">{{ form.captcha_input.help_text }}</span>
+                    {% if form.captcha_input.errors %}<span style="color:var(--danger); font-size:0.875rem; display:block;">{{ form.captcha_input.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 2.5rem; display: flex; justify-content: space-between;">
+            <a href="{% url 'registration:wizard' step=3 %}" class="btn btn-outline">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back
+            </a>
+            <button type="submit" class="btn btn-primary" style="background-color: var(--success);">
+                Complete Registration
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

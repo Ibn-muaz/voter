@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}INEC Underage Eradicator{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <script src="{% static 'js/main.js' %}" defer></script>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="navbar">
+        <div class="container flex justify-between items-center">
+            <a href="{% url 'registration:wizard' %}" class="nav-brand">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                INEC Registration
+            </a>
+            <nav class="flex gap-4">
+                {% if user.is_authenticated and user.is_staff %}
+                    <a href="{% url 'registration:list' %}" class="btn btn-outline" style="padding: 0.5rem 1rem;">Dashboard</a>
+                    <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline" style="padding: 0.5rem 1rem;">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline" style="padding: 0.5rem 1rem;">Staff Login</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        
+        <!-- Alerts -->
+        {% if messages %}
+            <div class="messages" style="margin-top: 1rem;">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+    <footer style="margin-top: auto; padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
+        <div class="container">
+            <p>&copy; {% now "Y" %} Independent National Electoral Commission. All rights reserved.</p>
+            <p style="margin-top: 0.5rem; display: flex; justify-content: center; gap: 1rem;">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>

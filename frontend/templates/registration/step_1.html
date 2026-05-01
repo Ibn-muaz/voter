@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Step 1: Personal Information - INEC Registration{% endblock %}
+
+{% block content %}
+<div class="glass-card animate-fade-in">
+    <div class="text-center" style="margin-bottom: 2rem;">
+        <h1 style="color: var(--primary);">Voter Registration</h1>
+        <p class="text-muted">Please complete your personal details carefully to match your valid IDs.</p>
+    </div>
+
+    <!-- Wizard Progress -->
+    <div class="wizard-progress">
+        <div class="wizard-step active">
+            1
+            <span class="wizard-label">Personal Info</span>
+        </div>
+        <div class="wizard-step">
+            2
+            <span class="wizard-label">Documents</span>
+        </div>
+        <div class="wizard-step">
+            3
+            <span class="wizard-label">Biometrics</span>
+        </div>
+        <div class="wizard-step">
+            4
+            <span class="wizard-label">Review</span>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'registration:wizard' step=1 %}" novalidate class="mt-4">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {% for error in form.non_field_errors %}
+                    <p style="margin:0;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <!-- Basic Details -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.surname.id_for_label }}">Surname (Last Name) *</label>
+                {{ form.surname }}
+                {% if form.surname.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.surname.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.first_name.id_for_label }}">First Name *</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.first_name.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.middle_name.id_for_label }}">Middle Name</label>
+                {{ form.middle_name }}
+                {% if form.middle_name.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.middle_name.errors.0 }}</span>{% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.gender.id_for_label }}">Gender *</label>
+                {{ form.gender }}
+                {% if form.gender.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.gender.errors.0 }}</span>{% endif %}
+            </div>
+
+            <!-- Date of Birth & Contact -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.date_of_birth.id_for_label }}">Date of Birth *</label>
+                {{ form.date_of_birth }}
+                <span class="form-text">{{ form.date_of_birth.help_text }}</span>
+                {% if form.date_of_birth.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.date_of_birth.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.confirm_date_of_birth.id_for_label }}">Confirm Date of Birth *</label>
+                {{ form.confirm_date_of_birth }}
+                <span class="form-text">{{ form.confirm_date_of_birth.help_text }}</span>
+                {% if form.confirm_date_of_birth.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.confirm_date_of_birth.errors.0 }}</span>{% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.phone_number.id_for_label }}">Phone Number *</label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.phone_number.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.occupation.id_for_label }}">Occupation *</label>
+                {{ form.occupation }}
+                {% if form.occupation.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.occupation.errors.0 }}</span>{% endif %}
+            </div>
+        </div>
+
+        <hr style="margin: 2rem 0; border: 0; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-bottom: 1.5rem; color: var(--text-muted);">Residence Information</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <!-- Locality Details -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.state_of_origin.id_for_label }}">State of Origin *</label>
+                {{ form.state_of_origin }}
+                {% if form.state_of_origin.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.state_of_origin.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.lga_of_origin.id_for_label }}">Local Government Area (LGA) *</label>
+                {{ form.lga_of_origin }}
+                {% if form.lga_of_origin.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.lga_of_origin.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.ward.id_for_label }}">Ward *</label>
+                {{ form.ward }}
+                {% if form.ward.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.ward.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.polling_unit.id_for_label }}">Polling Unit *</label>
+                {{ form.polling_unit }}
+                {% if form.polling_unit.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.polling_unit.errors.0 }}</span>{% endif %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="{{ form.residence_address.id_for_label }}">Full Residence Address *</label>
+            {{ form.residence_address }}
+            {% if form.residence_address.errors %}<span style="color:var(--danger); font-size:0.875rem;">{{ form.residence_address.errors.0 }}</span>{% endif %}
+        </div>
+
+        <div style="margin-top: 2.5rem; display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary">
+                Next Step
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

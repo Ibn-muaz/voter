@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Registration Status - INEC{% endblock %}
+
+{% block content %}
+<div class="glass-card animate-fade-in">
+    <div class="text-center" style="margin-bottom: 2rem;">
+        <h1 style="color: var(--primary);">Registration Status</h1>
+        <p class="text-muted">Check the current standing of your voter registration application.</p>
+    </div>
+
+    <div style="max-width: 600px; margin: 0 auto;">
+        
+        <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden;">
+            <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: #f8fafc;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 500; color: var(--text-muted);">Application ID: <span style="color: var(--text-main);">{{ registration.id|stringformat:"s"|slice:":8" }}...</span></span>
+                    
+                    {% if status == 'approved' %}
+                        <span class="badge badge-success">Approved</span>
+                    {% elif status == 'rejected' %}
+                        <span class="badge badge-danger">Rejected</span>
+                    {% elif status == 'flagged' %}
+                        <span class="badge badge-warning">Under Review</span>
+                    {% else %}
+                        <span class="badge badge-info">{{ status|title }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="padding: 1.5rem;">
+                <h3 style="margin-top: 0; margin-bottom: 1rem;">{{ registration.first_name }} {{ registration.surname }}</h3>
+                <p style="color: var(--text-muted); margin-bottom: 0.5rem;"><strong>State:</strong> {{ registration.state_of_origin }}</p>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;"><strong>Date Applied:</strong> {{ registration.registration_date|date:"F j, Y" }}</p>
+                
+                {% if status == 'approved' and vin %}
+                <div style="background: #ecfdf5; border: 1px dashed #34d399; padding: 1rem; border-radius: var(--radius-md); text-align: center;">
+                    <p style="color: #065f46; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">VIN</p>
+                    <p style="font-size: 1.5rem; font-family: monospace; font-weight: 700; color: var(--success);">{{ vin }}</p>
+                </div>
+                {% endif %}
+
+                {% if status == 'rejected' %}
+                <div style="background: #fef2f2; border: 1px dashed #f87171; padding: 1rem; border-radius: var(--radius-md);">
+                    <p style="color: #991b1b; font-size: 0.875rem; font-weight: 600;">Reason for Rejection:</p>
+                    <p style="color: #7f1d1d; font-size: 0.875rem;">{{ registration.rejection_reason }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center;">
+            <a href="/" class="btn btn-outline">Return to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

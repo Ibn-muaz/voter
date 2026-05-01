@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Staff Login - INEC Underage Eradicator{% endblock %}
+
+{% block content %}
+<div class="flex justify-center" style="min-height: calc(100vh - 200px); align-items: center;">
+    <div class="glass-card animate-fade-in" style="max-width: 450px; width: 100%; margin: 0;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div class="status-icon" style="background: rgba(0, 135, 81, 0.1); color: var(--primary); width: 64px; height: 64px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <polyline points="17 11 19 13 23 9"></polyline>
+                </svg>
+            </div>
+            <h2 style="margin-bottom: 0.5rem;">Staff Login</h2>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">Enter your credentials to access the INEC Portal</p>
+        </div>
+
+        <form method="post" action="{% url 'login' %}" class="flex flex-col gap-4">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <div class="alert alert-error" style="font-size: 0.875rem; padding: 0.75rem;">
+                    Invalid username or password.
+                </div>
+            {% endif %}
+
+            {% if next %}
+                {% if user.is_authenticated %}
+                    <div class="alert alert-warning" style="font-size: 0.875rem; padding: 0.75rem;">
+                        Your account doesn't have access to this page.
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+                <label for="id_username" class="form-label">Username</label>
+                <input type="text" name="username" id="id_username" class="form-control" placeholder="e.g. j.doe" required autofocus>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="id_password" class="form-label">Password</label>
+                <input type="password" name="password" id="id_password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <button type="submit" class="btn btn-primary btn-block">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 15 12 10 7"></polyline>
+                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
+                Sign In
+            </button>
+        </form>
+
+        <div style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem;">
+            <a href="#" class="text-muted" style="text-decoration: none;">Forgot your password? Contact IT Support</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

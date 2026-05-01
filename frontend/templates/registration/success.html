@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Registration Success - INEC{% endblock %}
+
+{% block content %}
+<div class="glass-card animate-fade-in status-display">
+    <div class="status-icon success">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+    </div>
+    <h1 style="color: var(--success); margin-bottom: 1rem;">Registration Successful!</h1>
+    <p class="text-muted" style="font-size: 1.125rem; max-width: 600px; margin: 0 auto 2rem;">
+        Your identity has been verified by the AI system and your registration is approved.
+    </p>
+
+    <div style="background: #f8fafc; border: 1px dashed var(--success); border-radius: var(--radius-lg); padding: 2rem; max-width: 500px; margin: 0 auto 2.5rem;">
+        <p style="color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Your Voter Identification Number (VIN)</p>
+        <span style="font-size: 2.5rem; font-family: monospace; font-weight: 700; color: var(--text-main); letter-spacing: 2px;">{{ registration.vin }}</span>
+    </div>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        {% if registration.temporary_voter_card %}
+        <a href="{% url 'registration:download_tvc' registration.id %}" class="btn btn-primary" style="gap: 0.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download Card
+        </a>
+        <button onclick="window.print()" class="btn btn-outline" style="gap: 0.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Print Card
+        </button>
+        {% endif %}
+        <a href="{% url 'registration:wizard' step=1 %}" class="btn btn-outline" style="min-width: 150px;">Return Home</a>
+    </div>
+
+    <!-- Hidden Card for Printing -->
+    <div class="print-card" style="display: none;">
+        <div style="text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0; color: var(--primary);">INDEPENDENT NATIONAL ELECTORAL COMMISSION</h2>
+            <p style="margin: 0.25rem 0; font-weight: 600;">TEMPORARY VOTER CARD</p>
+        </div>
+        
+        <div style="display: flex; gap: 2rem;">
+            <div style="flex: 1;">
+                <div style="margin-bottom: 1rem;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #666;">Voter ID (VIN)</span>
+                    <p style="font-size: 1.25rem; font-weight: 700; font-family: monospace; margin: 0;">{{ registration.vin }}</p>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #666;">Full Name</span>
+                    <p style="font-weight: 600; margin: 0;">{{ registration.surname }}, {{ registration.first_name }} {{ registration.middle_name|default:'' }}</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <span style="font-size: 0.75rem; text-transform: uppercase; color: #666;">Date of Birth</span>
+                        <p style="font-weight: 600; margin: 0;">{{ registration.date_of_birth }}</p>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.75rem; text-transform: uppercase; color: #666;">Gender</span>
+                        <p style="font-weight: 600; margin: 0;">{{ registration.gender|title }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="width: 120px; height: 140px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; background: #f9f9f9;">
+                {% if registration.facial_image %}
+                    <img src="{{ registration.facial_image.url }}" style="max-width: 100%; max-height: 100%;">
+                {% else %}
+                    <span style="font-size: 0.75rem; color: #999;">PHOTO</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div style="margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1rem;">
+            <div style="margin-bottom: 1rem;">
+                <span style="font-size: 0.75rem; text-transform: uppercase; color: #666;">Polling Unit</span>
+                <p style="font-weight: 500; margin: 0;">{{ registration.ward }}, {{ registration.polling_unit }}</p>
+                <p style="font-size: 0.875rem; color: #666; margin: 0;">{{ registration.residence_lga }}, {{ registration.residence_state }}</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 1rem; text-align: center; font-size: 0.65rem; color: #888;">
+            <p>This is a temporary document issued by INEC. It must be presented for final verification.</p>
+            <p>© 2026 Independent National Electoral Commission of Nigeria</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
