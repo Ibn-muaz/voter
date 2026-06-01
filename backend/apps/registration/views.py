@@ -1,11 +1,11 @@
 """
 Views for the voter registration system.
-Implements multi-step registration wizard with AI verification.
+Implements multi-step registration wizard with AI verification and admin approval.
 """
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.utils import timezone
@@ -20,7 +20,7 @@ import uuid
 import base64
 import io
 
-from .models import VoterRegistration, RegistrationStep, TemporaryVoterCard
+from .models import VoterRegistration, RegistrationStep, TemporaryVoterCard, ApprovalAuditLog
 from .forms import (
     PersonalInfoForm, DocumentUploadForm, BiometricCaptureForm,
     ReviewAndSubmitForm, RegistrationSearchForm, BulkRegistrationForm
@@ -34,6 +34,11 @@ from apps.documents.utils import DocumentProcessor
 from apps.biometrics.utils import BiometricProcessor, process_biometric_data
 
 
+def is_admin(user):
+    """Check if user is admin."""
+    return user.is_staff or user.is_superuser
+
+
 def get_or_create_registration_session(request):
     """
     Get or create a registration session for the current user.
@@ -44,7 +49,7 @@ def get_or_create_registration_session(request):
         try:
             registration = VoterRegistration.objects.get(
                 session_id=session_id,
-                status__in=['draft', 'in_progress']
+                status__in=['draft', 'in_progress', 'pending_verification']
             )
             return registration
         except VoterRegistration.DoesNotExist:
@@ -314,15 +319,17 @@ def handle_review_submit_step(request, registration):
             registration.is_underage_suspected = not verification_result.get('approved', False)
             registration.verification_completed_at = timezone.now()
 
+            # Calculate risk level
+            registration.calculate_risk_level()
+
             # Determine status based on AI results
             if registration.is_underage_suspected:
                 registration.status = 'rejected'
-                registration.rejection_reason = 'AI detected potential underage registration'
+                registration.rejection_reason = 'underage'
+                registration.rejection_details = 'AI detected potential underage registration'
             else:
-                registration.status = 'approved'
-                # Generate VIN and Temporary Voter Card
-                registration.vin = generate_vin(registration)
-                generate_temporary_voter_card(registration)
+                # Set to pending admin approval instead of auto-approving
+                registration.status = 'pending_admin_approval'
 
             registration.step_4_completed = True
             registration.completed_at = timezone.now()
@@ -337,21 +344,22 @@ def handle_review_submit_step(request, registration):
                 step_data={
                     'ai_verified': True,
                     'status': registration.status,
-                    'vin_generated': bool(registration.vin),
+                    'risk_level': registration.risk_level,
                 }
             )
 
             # Log completion
             AuditLog.objects.create(
-                action_type='registration_completed',
-                description=f'Registration completed with status: {registration.status}',
+                action_type='registration_submitted',
+                description=f'Registration submitted for admin approval: {registration.id}',
                 user=None,
                 ip_address=get_client_ip(request),
                 metadata={
                     'registration_id': registration.id,
-                    'vin': registration.vin,
+                    'status': registration.status,
                     'ai_score': registration.ai_verification_score,
                     'is_underage': registration.is_underage_suspected,
+                    'risk_level': registration.risk_level,
                 }
             )
 
@@ -361,12 +369,12 @@ def handle_review_submit_step(request, registration):
             if 'captcha_text' in request.session:
                 del request.session['captcha_text']
 
-            if registration.status == 'approved':
-                messages.success(request, f'Registration completed successfully! Your VIN is: {registration.vin}')
-                return redirect('registration:success', registration_id=registration.id)
-            else:
-                messages.error(request, 'Registration rejected due to suspected underage attempt.')
+            if registration.status == 'rejected':
+                messages.error(request, 'Registration was rejected due to suspected underage attempt.')
                 return redirect('registration:rejected', registration_id=registration.id)
+            else:
+                messages.success(request, 'Registration submitted successfully. Awaiting admin approval.')
+                return redirect('registration:submitted', registration_id=registration.id)
 
     # If we got here, form is invalid
     captcha_text, captcha_image = CaptchaUtils.generate_captcha()
@@ -438,6 +446,25 @@ def get_step_name(step):
     return step_names.get(step, f'Step {step}')
 
 
+def registration_submitted(request, registration_id):
+    """Display registration submitted for approval page."""
+    registration = get_object_or_404(VoterRegistration, id=registration_id)
+
+    # Log access
+    DataAccessLog.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        access_type='view',
+        data_type='registration_submitted',
+        data_id=registration.id,
+        ip_address=get_client_ip(request),
+        purpose='view_submission_confirmation'
+    )
+
+    return render(request, 'registration/submitted.html', {
+        'registration': registration,
+    })
+
+
 def registration_success(request, registration_id):
     """Display registration success page."""
     registration = get_object_or_404(VoterRegistration, id=registration_id, status='approved')
@@ -475,17 +502,21 @@ def registration_list(request):
     # Get filter parameters
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '')
+    risk_filter = request.GET.get('risk_level', '')
 
     registrations = VoterRegistration.objects.all().order_by('-created_at')
 
     if status_filter:
         registrations = registrations.filter(status=status_filter)
 
+    if risk_filter:
+        registrations = registrations.filter(risk_level=risk_filter)
+
     if search_query:
         registrations = registrations.filter(
             Q(vin__icontains=search_query) |
             Q(first_name__icontains=search_query) |
-            Q(last_name__icontains=search_query) |
+            Q(surname__icontains=search_query) |
             Q(phone_number__icontains=search_query)
         )
 
@@ -497,7 +528,46 @@ def registration_list(request):
     return render(request, 'registration/list.html', {
         'page_obj': page_obj,
         'status_filter': status_filter,
+        'risk_filter': risk_filter,
         'search_query': search_query,
+    })
+
+
+@login_required
+@user_passes_test(is_admin)
+def pending_approvals(request):
+    """View pending registrations requiring admin approval."""
+    pending = VoterRegistration.objects.filter(
+        status='pending_admin_approval'
+    ).order_by('-created_at')
+
+    # Risk level filtering
+    risk_filter = request.GET.get('risk_level', '')
+    if risk_filter:
+        pending = pending.filter(risk_level=risk_filter)
+
+    # Sorting
+    sort_by = request.GET.get('sort_by', '-created_at')
+    if sort_by in ['created_at', '-created_at', 'ai_verification_score', '-ai_verification_score']:
+        pending = pending.order_by(sort_by)
+
+    # Pagination
+    paginator = Paginator(pending, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    stats = {
+        'total_pending': VoterRegistration.objects.filter(status='pending_admin_approval').count(),
+        'high_risk': VoterRegistration.objects.filter(status='pending_admin_approval', risk_level='high').count(),
+        'medium_risk': VoterRegistration.objects.filter(status='pending_admin_approval', risk_level='medium').count(),
+        'low_risk': VoterRegistration.objects.filter(status='pending_admin_approval', risk_level='low').count(),
+    }
+
+    return render(request, 'registration/pending_approvals.html', {
+        'page_obj': page_obj,
+        'stats': stats,
+        'risk_filter': risk_filter,
+        'sort_by': sort_by,
     })
 
 
@@ -530,8 +600,12 @@ def registration_detail(request, registration_id):
         purpose='admin_review'
     )
 
+    # Get approval audit trail
+    approval_audits = registration.approval_audits.all().order_by('-timestamp')
+
     return render(request, 'registration/detail.html', {
         'registration': registration,
+        'approval_audits': approval_audits,
     })
 
 
@@ -719,5 +793,3 @@ def capture_fingerprint(request):
             return JsonResponse({'success': False, 'error': str(e)})
 
     return JsonResponse({'success': False, 'error': 'Invalid request'})
-
-
