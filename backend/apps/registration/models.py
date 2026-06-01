@@ -14,6 +14,7 @@ class VoterRegistration(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Draft'),
         ('pending_verification', 'Pending Verification'),
+        ('pending_admin_approval', 'Pending Admin Approval'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
         ('flagged', 'Flagged for Review'),
@@ -26,6 +27,7 @@ class VoterRegistration(models.Model):
         ('duplicate', 'Duplicate registration detected'),
         ('anomaly_detected', 'Anomaly detected in registration'),
         ('manual_review', 'Requires manual review'),
+        ('admin_rejection', 'Rejected by admin'),
     ]
 
     # Personal Information (Step 1)
@@ -168,7 +170,35 @@ class VoterRegistration(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
     temporary_voter_card = models.FileField(upload_to='tvc/', null=True, blank=True)
 
-    # Timestamps
+    # Admin Approval Workflow Fields
+    approved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='registrations_approved'
+    )
+    approval_notes = models.TextField(
+        blank=True,
+        help_text="Admin notes during approval process"
+    )
+    approval_timestamp = models.DateTimeField(null=True, blank=True)
+    
+    # Risk Assessment Fields
+    risk_level = models.CharField(
+        max_length=20,
+        choices=[
+            ('low', 'Low Risk'),
+            ('medium', 'Medium Risk'),
+            ('high', 'High Risk'),
+        ],
+        default='medium',
+        help_text="Auto-calculated risk level based on AI verification"
+    )
+    risk_assessment_notes = models.TextField(
+        blank=True,
+        help_text="Detailed risk assessment notes"
+    )
 
     # Timestamps
     created_at = models.DateTimeField(default=timezone.now)
@@ -184,6 +214,7 @@ class VoterRegistration(models.Model):
             models.Index(fields=['status', 'registration_date']),
             models.Index(fields=['state_of_origin', 'lga_of_origin']),
             models.Index(fields=['ai_verification_score']),
+            models.Index(fields=['status', 'approved_by']),
         ]
 
     def __str__(self):
@@ -236,6 +267,24 @@ class VoterRegistration(models.Model):
         if not self.step_4_completed:
             return 4
         return 5
+
+    def calculate_risk_level(self):
+        """Calculate risk level based on AI verification results."""
+        if self.ai_verification_score >= 0.85:
+            self.risk_level = 'low'
+        elif self.ai_verification_score >= 0.65:
+            self.risk_level = 'medium'
+        else:
+            self.risk_level = 'high'
+        return self.risk_level
+
+    def is_ready_for_approval(self):
+        """Check if registration is ready for admin approval."""
+        return (
+            self.status == 'pending_verification' and
+            self.step_4_completed and
+            not self.is_underage_suspected
+        )
 
 
 class RegistrationStep(models.Model):
@@ -317,3 +366,70 @@ class TemporaryVoterCard(models.Model):
 
     def __str__(self):
         return f"TVC-{self.card_number} for {self.registration}"
+
+
+class ApprovalAuditLog(models.Model):
+    """
+    Track all admin approval decisions for compliance and auditing.
+    """
+    ACTION_CHOICES = [
+        ('approve', 'Approved'),
+        ('reject', 'Rejected'),
+        ('flag', 'Flagged for Review'),
+        ('override', 'Manual Override'),
+    ]
+
+    registration = models.ForeignKey(
+        VoterRegistration,
+        on_delete=models.CASCADE,
+        related_name='approval_audits'
+    )
+
+    admin_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='approval_actions'
+    )
+
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    
+    reason = models.TextField(
+        help_text="Reason for the approval/rejection decision"
+    )
+
+    risk_assessment = models.CharField(
+        max_length=20,
+        choices=[
+            ('low', 'Low Risk'),
+            ('medium', 'Medium Risk'),
+            ('high', 'High Risk'),
+        ],
+        blank=True
+    )
+
+    ai_score_at_approval = models.FloatField(
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)]
+    )
+
+    # Additional verification checks
+    documents_verified = models.BooleanField(default=False)
+    biometrics_verified = models.BooleanField(default=False)
+    age_verified = models.BooleanField(default=False)
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Approval Audit Log"
+        verbose_name_plural = "Approval Audit Logs"
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['registration', 'timestamp']),
+            models.Index(fields=['admin_user', 'action']),
+        ]
+
+    def __str__(self):
+        return f"{self.registration.id} - {self.action} by {self.admin_user.username} at {self.timestamp}"
